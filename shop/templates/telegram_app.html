@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Telegram Shop</title>
+    <link rel="stylesheet" href="/static/css/telegram-app.css">
+    <!-- Telegram WebApp JS SDK -->
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+</head>
+<body>
+    <div class="container">
+        <div id="error-message" class="message error-message"></div>
+        <div id="success-message" class="message success-message"></div>
+        
+        <!-- Навигация -->
+        <div class="nav-tabs">
+            <div class="nav-tab active" data-tab="profile">Профиль</div>
+            <div class="nav-tab" data-tab="catalog">Каталог</div>
+            <div class="nav-tab" data-tab="cart">Корзина</div>
+        </div>
+        
+        <!-- Секция профиля -->
+        <div id="profile-container" class="profile-container">
+            <!-- Секция для неавторизованных пользователей -->
+            <div id="auth-section" class="section" style="display: none;">
+                <h2>Авторизация</h2>
+                <p>Для доступа к профилю необходимо авторизоваться через Telegram.</p>
+                <p>Авторизация происходит автоматически при запуске приложения.</p>
+            </div>
+            
+            <!-- Секция для авторизованных пользователей -->
+            <div id="profile-section" class="section" style="display: none;">
+                <h2>Мой профиль</h2>
+                
+                <!-- Режим просмотра профиля -->
+                <div id="view-mode">
+                    <div class="profile-header">
+                        <img id="profile-avatar" src="/static/img/default-avatar.png" alt="Аватар" class="profile-avatar">
+                        <div>
+                            <h3 class="profile-name" id="profile-name">Имя пользователя</h3>
+                            <p class="profile-username" id="profile-username">@username</p>
+                        </div>
+                    </div>
+                    
+                    <div id="user-info" class="user-info">
+                        <!-- Данные профиля будут добавлены через JavaScript -->
+                    </div>
+                    
+                    <div id="addresses-container" class="addresses-container">
+                        <h3>Мои адреса <span class="address-count" id="address-count">(0/5)</span></h3>
+                        <div id="addresses-list" class="addresses-list">
+                            <!-- Список адресов будет добавлен через JavaScript -->
+                        </div>
+                        <button id="add-address-btn" class="btn btn-secondary">Добавить адрес</button>
+                    </div>
+                    
+                    <button id="edit-profile-btn" class="btn btn-block">Редактировать профиль</button>
+                </div>
+                
+                <!-- Режим редактирования профиля -->
+                <div id="edit-mode" style="display: none;">
+                    <h3>Редактирование профиля</h3>
+                    
+                    <form id="profile-edit-form">
+                        <div class="form-group">
+                            <label for="first-name">Имя</label>
+                            <input type="text" id="first-name" name="first-name" placeholder="Введите имя">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="last-name">Фамилия</label>
+                            <input type="text" id="last-name" name="last-name" placeholder="Введите фамилию">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="phone-number">Телефон</label>
+                            <input type="tel" id="phone-number" name="phone-number" placeholder="Введите номер телефона">
+                        </div>
+                        
+                        <div class="form-actions">
+                            <button type="submit" class="btn">Сохранить</button>
+                            <button type="button" id="cancel-edit-btn" class="btn btn-secondary">Отмена</button>
+                        </div>
+                    </form>
+                </div>
+                
+                <!-- Режим добавления/редактирования адреса -->
+                <div id="address-edit-mode" style="display: none;">
+                    <h3 id="address-form-title">Добавление адреса</h3>
+                    
+                    <form id="address-edit-form">
+                        <input type="hidden" id="address-id" name="address-id" value="">
+                        
+                        <div class="form-group">
+                            <label for="address-name">Название адреса</label>
+                            <input type="text" id="address-name" name="address-name" placeholder="Например: Дом, Работа">
+                        </div>
+                        
+                        <div class="location-button-container">
+                            <button type="button" id="get-location-btn" class="btn btn-secondary">
+                                <span class="location-icon">📍</span> Определить адрес автоматически
+                                <span id="location-spinner" class="spinner" style="display: none;"></span>
+                            </button>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="district">Район</label>
+                            <input type="text" id="district" name="district" placeholder="Введите район">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="street">Улица</label>
+                            <input type="text" id="street" name="street" placeholder="Введите улицу">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="house-number">Номер дома</label>
+                            <input type="text" id="house-number" name="house-number" placeholder="Введите номер дома">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="floor">Этаж</label>
+                            <input type="text" id="floor" name="floor" placeholder="Введите этаж">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="apartment">Квартира</label>
+                            <input type="text" id="apartment" name="apartment" placeholder="Введите номер квартиры">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="checkbox-container">
+                                <input type="checkbox" id="is-default" name="is-default">
+                                <span class="checkmark"></span>
+                                Использовать как адрес по умолчанию
+                            </label>
+                        </div>
+                        
+                        <div class="form-actions">
+                            <button type="submit" class="btn">Сохранить</button>
+                            <button type="button" id="cancel-address-btn" class="btn btn-secondary">Отмена</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Секция каталога -->
+        <div id="catalog-container" class="catalog-container" style="display: none;">
+            <h2>Каталог товаров</h2>
+            <p>Здесь будет отображаться каталог товаров.</p>
+        </div>
+        
+        <!-- Секция корзины -->
+        <div id="cart-container" class="cart-container" style="display: none;">
+            <h2>Корзина</h2>
+            <p>Здесь будет отображаться корзина с товарами.</p>
+        </div>
+    </div>
+    
+    <!-- Подключение скриптов -->
+    <script src="/static/js/telegram-auth.js"></script>
+    <script src="/static/js/profile.js"></script>
+    <script>
+        // Переключение между вкладками
+        document.addEventListener('DOMContentLoaded', () => {
+            const tabs = document.querySelectorAll('.nav-tab');
+            const containers = {
+                'profile': document.getElementById('profile-container'),
+                'catalog': document.getElementById('catalog-container'),
+                'cart': document.getElementById('cart-container')
+            };
+            
+            tabs.forEach(tab => {
+                tab.addEventListener('click', () => {
+                    const tabName = tab.getAttribute('data-tab');
+                    
+                    // Активация вкладки
+                    tabs.forEach(t => t.classList.remove('active'));
+                    tab.classList.add('active');
+                    
+                    // Отображение соответствующего контейнера
+                    Object.keys(containers).forEach(key => {
+                        if (key === tabName) {
+                            containers[key].style.display = 'block';
+                        } else {
+                            containers[key].style.display = 'none';
+                        }
+                    });
+                });
+            });
+            
+            // Установка аватара пользователя, если доступен
+            if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initDataUnsafe && window.Telegram.WebApp.initDataUnsafe.user) {
+                const user = window.Telegram.WebApp.initDataUnsafe.user;
+                if (user.photo_url) {
+                    document.getElementById('profile-avatar').src = user.photo_url;
+                }
+                if (user.first_name || user.last_name) {
+                    document.getElementById('profile-name').textContent = `${user.first_name || ''} ${user.last_name || ''}`.trim();
+                }
+                if (user.username) {
+                    document.getElementById('profile-username').textContent = `@${user.username}`;
+                }
+            }
+        });
+    </script>
+</body>
+</html> 

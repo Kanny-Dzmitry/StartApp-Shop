@@ -15,8 +15,19 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 from django.contrib import admin
-from django.urls import path
+from django.urls import path, include
+from rest_framework.authtoken import views
+from django.conf import settings
+from django.conf.urls.static import static
+from accounts.views import telegram_app_view
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+    path('api/accounts/', include('accounts.urls')),
+    path('api-token-auth/', views.obtain_auth_token),  # Для получения токена аутентификации
+    path('', telegram_app_view, name='telegram-app'),  # Главная страница - Telegram Mini App
 ]
+
+# Добавляем обработку статических файлов в режиме разработки
+if settings.DEBUG:
+    urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
