@@ -1,0 +1,311 @@
+/* Стили для каталога товаров */
+
+/* Контейнер каталога */
+.catalog-container {
+    padding: 0 10px 20px;
+    max-width: 100%;
+}
+
+/* Заголовок каталога */
+.catalog-title {
+    font-size: 1.5rem;
+    margin: 15px 0;
+    text-align: center;
+    color: var(--tg-theme-text-color, #000);
+}
+
+/* Навигация по каталогу */
+.catalog-navigation {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 15px;
+    padding: 0 5px;
+}
+
+.catalog-navigation button {
+    background-color: transparent;
+    border: none;
+    color: var(--tg-theme-link-color, #3498db);
+    font-size: 0.9rem;
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    padding: 5px;
+}
+
+.catalog-navigation button:before {
+    content: "←";
+    margin-right: 5px;
+}
+
+/* Сетка категорий (3 элемента в ряд) */
+.categories-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    margin-top: 15px;
+}
+
+/* Карточка категории */
+.category-card {
+    position: relative;
+    aspect-ratio: 1/1;
+    border-radius: 12px;
+    background-color: var(--tg-theme-secondary-bg-color, #f5f5f5);
+    background-size: cover;
+    background-position: center;
+    overflow: hidden;
+    cursor: pointer;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.category-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+/* Название категории */
+.category-name {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    background-color: var(--tg-theme-bg-color, rgba(255, 255, 255, 0.8));
+    color: var(--tg-theme-text-color, #000);
+    padding: 5px 8px;
+    border-radius: 8px;
+    font-size: 0.8rem;
+    font-weight: bold;
+    max-width: calc(100% - 20px);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* Стили для карточки без изображения */
+.category-card.no-image {
+    background-color: var(--tg-theme-secondary-bg-color, #e9ecef);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.category-card.no-image .category-name {
+    position: static;
+    background-color: transparent;
+    text-align: center;
+    width: 100%;
+    font-size: 0.9rem;
+}
+
+/* Сетка разделов (аналогично категориям) */
+.sections-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    margin-top: 15px;
+}
+
+/* Карточка раздела (аналогично категории) */
+.section-card {
+    position: relative;
+    aspect-ratio: 1/1;
+    border-radius: 12px;
+    background-color: var(--tg-theme-secondary-bg-color, #f0f0f0);
+    background-size: cover;
+    background-position: center;
+    overflow: hidden;
+    cursor: pointer;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.section-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+/* Название раздела */
+.section-name {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    background-color: var(--tg-theme-bg-color, rgba(255, 255, 255, 0.8));
+    color: var(--tg-theme-text-color, #000);
+    padding: 5px 8px;
+    border-radius: 8px;
+    font-size: 0.8rem;
+    font-weight: bold;
+    max-width: calc(100% - 20px);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* Стили для карточки без изображения */
+.section-card.no-image {
+    background-color: var(--tg-theme-secondary-bg-color, #e3e6e8);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.section-card.no-image .section-name {
+    position: static;
+    background-color: transparent;
+    text-align: center;
+    width: 100%;
+    font-size: 0.9rem;
+}
+
+/* Список товаров */
+.products-list {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    margin-top: 15px;
+}
+
+/* Карточка товара */
+.product-card {
+    display: flex;
+    background-color: var(--tg-theme-bg-color, #ffffff);
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    padding: 10px;
+    cursor: pointer;
+}
+
+/* Изображение товара */
+.product-image {
+    width: 80px;
+    height: 80px;
+    background-size: cover;
+    background-position: center;
+    border-radius: 8px;
+    flex-shrink: 0;
+}
+
+.product-image.no-image {
+    background-color: var(--tg-theme-secondary-bg-color, #e9ecef);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+/* Информация о товаре */
+.product-info {
+    flex-grow: 1;
+    padding: 0 10px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+/* Название товара */
+.product-name {
+    font-size: 0.9rem;
+    margin: 0 0 5px;
+    font-weight: bold;
+    color: var(--tg-theme-text-color, #000);
+}
+
+/* Цена товара */
+.product-price {
+    font-weight: bold;
+    font-size: 1rem;
+    color: var(--tg-theme-text-color, #333);
+}
+
+/* Количество товара */
+.product-quantity {
+    font-size: 0.8rem;
+    color: var(--tg-theme-hint-color, #666);
+    margin-top: 3px;
+}
+
+/* Кнопка добавления в корзину */
+.add-to-cart-btn {
+    align-self: center;
+    margin-left: 5px;
+    font-size: 0.8rem;
+    padding: 5px 10px;
+    background-color: var(--tg-theme-button-color, #3498db);
+    color: var(--tg-theme-button-text-color, white);
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+/* Сообщение об отсутствии элементов */
+.no-items {
+    text-align: center;
+    color: var(--tg-theme-hint-color, #999);
+    margin: 20px 0;
+    font-size: 0.9rem;
+}
+
+/* Индикатор загрузки */
+.loader {
+    border: 4px solid var(--tg-theme-secondary-bg-color, #f3f3f3);
+    border-top: 4px solid var(--tg-theme-button-color, #3498db);
+    border-radius: 50%;
+    width: 30px;
+    height: 30px;
+    animation: spin 1s linear infinite;
+    margin: 20px auto;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Специфичные стили для темной темы */
+.theme-dark .category-name,
+.theme-dark .section-name {
+    background-color: rgba(60, 60, 60, 0.8);
+}
+
+/* Улучшение читаемости текста на карточках с изображениями в темной теме */
+.theme-dark .category-card:not(.no-image) .category-name,
+.theme-dark .section-card:not(.no-image) .section-name {
+    color: #fff;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
+}
+
+/* Улучшение видимости границ карточек в темной теме */
+.theme-dark .category-card,
+.theme-dark .section-card,
+.theme-dark .product-card {
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+}
+
+/* Адаптация под Telegram Mini App */
+@media (max-width: 360px) {
+    .categories-grid, .sections-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+/* Адаптация для маленьких экранов */
+@media (max-width: 320px) {
+    .product-image {
+        width: 60px;
+        height: 60px;
+    }
+    
+    .product-name {
+        font-size: 0.8rem;
+    }
+    
+    .product-price {
+        font-size: 0.9rem;
+    }
+    
+    .add-to-cart-btn {
+        font-size: 0.7rem;
+        padding: 4px 8px;
+    }
+} 

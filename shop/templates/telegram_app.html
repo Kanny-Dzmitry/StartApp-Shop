@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Telegram Shop</title>
     <link rel="stylesheet" href="/static/css/telegram-app.css">
+    <link rel="stylesheet" href="/static/css/catalog.css">
     <!-- Telegram WebApp JS SDK -->
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
 </head>
@@ -148,8 +149,16 @@
         
         <!-- Секция каталога -->
         <div id="catalog-container" class="catalog-container" style="display: none;">
-            <h2>Каталог товаров</h2>
-            <p>Здесь будет отображаться каталог товаров.</p>
+            <!-- Навигация по каталогу -->
+            <div id="catalog-navigation" class="catalog-navigation" style="display: none;">
+                <button id="back-to-categories">К категориям</button>
+                <button id="back-to-sections" style="display: none;">К разделам</button>
+            </div>
+            
+            <!-- Контент каталога -->
+            <div id="catalog-content" class="catalog-content">
+                <!-- Контент будет добавлен через JavaScript -->
+            </div>
         </div>
         
         <!-- Секция корзины -->
@@ -162,6 +171,7 @@
     <!-- Подключение скриптов -->
     <script src="/static/js/telegram-auth.js"></script>
     <script src="/static/js/profile.js"></script>
+    <script src="/static/js/catalog.js"></script>
     <script>
         // Переключение между вкладками
         document.addEventListener('DOMContentLoaded', () => {

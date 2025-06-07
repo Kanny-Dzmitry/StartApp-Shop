@@ -26,8 +26,11 @@ urlpatterns = [
     path('api/accounts/', include('accounts.urls')),
     path('api-token-auth/', views.obtain_auth_token),  # Для получения токена аутентификации
     path('', telegram_app_view, name='telegram-app'),  # Главная страница - Telegram Mini App
+    path('catalog/', include('catalog.urls', namespace='catalog')),  # URL для каталога товаров
+    path('api/catalog/', include('catalog.api_urls', namespace='catalog_api')),  # API URL для каталога товаров
 ]
 
 # Добавляем обработку статических файлов в режиме разработки
 if settings.DEBUG:
     urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
