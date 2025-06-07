@@ -6,6 +6,7 @@
     <title>Telegram Shop</title>
     <link rel="stylesheet" href="/static/css/telegram-app.css">
     <link rel="stylesheet" href="/static/css/catalog.css">
+    <link rel="stylesheet" href="/static/css/cart.css">
     <!-- Telegram WebApp JS SDK -->
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
 </head>
@@ -14,15 +15,15 @@
         <div id="error-message" class="message error-message"></div>
         <div id="success-message" class="message success-message"></div>
         
-        <!-- Навигация -->
-        <div class="nav-tabs">
-            <div class="nav-tab active" data-tab="profile">Профиль</div>
-            <div class="nav-tab" data-tab="catalog">Каталог</div>
-            <div class="nav-tab" data-tab="cart">Корзина</div>
+        <!-- Секция главной страницы -->
+        <div id="home-container" class="home-container">
+            <h2>Добро пожаловать в наш магазин!</h2>
+            <p>Выберите раздел в меню навигации ниже.</p>
+            <!-- Здесь можно добавить слайдер, акции, новинки и т.д. -->
         </div>
         
         <!-- Секция профиля -->
-        <div id="profile-container" class="profile-container">
+        <div id="profile-container" class="profile-container" style="display: none;">
             <!-- Секция для неавторизованных пользователей -->
             <div id="auth-section" class="section" style="display: none;">
                 <h2>Авторизация</h2>
@@ -38,10 +39,16 @@
                 <div id="view-mode">
                     <div class="profile-header">
                         <img id="profile-avatar" src="/static/img/default-avatar.png" alt="Аватар" class="profile-avatar">
-                        <div>
+                        <div class="profile-info">
                             <h3 class="profile-name" id="profile-name">Имя пользователя</h3>
                             <p class="profile-username" id="profile-username">@username</p>
                         </div>
+                        <button id="edit-profile-btn" class="edit-profile-icon" aria-label="Редактировать профиль">
+                            <svg width="20" height="20" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M19.4 7.34L16.66 4.6A2 2 0 0 0 14 4.53l-9 9a2 2 0 0 0-.57 1.21L4 18.91a1 1 0 0 0 .29.8A1 1 0 0 0 5 20h.09l4.17-.38a2 2 0 0 0 1.21-.57l9-9a1.92 1.92 0 0 0-.07-2.71zM9.08 17.62l-3 .28.27-3L12 9.32l2.7 2.7zM16 10l-2.68-2.68 1.55-1.55L17.58 8.4z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+                                <path d="M12 20H20" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                        </button>
                     </div>
                     
                     <div id="user-info" class="user-info">
@@ -55,8 +62,6 @@
                         </div>
                         <button id="add-address-btn" class="btn btn-secondary">Добавить адрес</button>
                     </div>
-                    
-                    <button id="edit-profile-btn" class="btn btn-block">Редактировать профиль</button>
                 </div>
                 
                 <!-- Режим редактирования профиля -->
@@ -163,41 +168,90 @@
         
         <!-- Секция корзины -->
         <div id="cart-container" class="cart-container" style="display: none;">
-            <h2>Корзина</h2>
-            <p>Здесь будет отображаться корзина с товарами.</p>
+            <!-- Контент корзины будет добавлен через JavaScript -->
+        </div>
+        
+        <!-- Навигация внизу страницы -->
+        <div class="bottom-nav">
+            <div class="nav-button" data-tab="home">
+                <svg class="nav-icon" width="24" height="24" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M9 22V12h6v10" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+            </div>
+            <div class="nav-button" data-tab="catalog">
+                <svg class="nav-icon" width="24" height="24" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M4 9h16M4 14h16" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+            </div>
+            <div class="nav-button" data-tab="cart">
+                <svg class="nav-icon" width="24" height="24" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M9 22a1 1 0 100-2 1 1 0 000 2zM20 22a1 1 0 100-2 1 1 0 000 2z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M1 1h4l2.68 13.39a2 2 0 002 1.61h9.72a2 2 0 002-1.61L23 6H6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                <div class="cart-badge" id="cart-badge">0</div>
+            </div>
+            <div class="nav-button" data-tab="profile">
+                <svg class="nav-icon" width="24" height="24" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    <circle cx="12" cy="7" r="4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+            </div>
         </div>
     </div>
     
     <!-- Подключение скриптов -->
     <script src="/static/js/telegram-auth.js"></script>
     <script src="/static/js/profile.js"></script>
+    <script src="/static/js/cart.js"></script>
     <script src="/static/js/catalog.js"></script>
     <script>
         // Переключение между вкладками
         document.addEventListener('DOMContentLoaded', () => {
-            const tabs = document.querySelectorAll('.nav-tab');
+            const navButtons = document.querySelectorAll('.nav-button');
             const containers = {
+                'home': document.getElementById('home-container'),
                 'profile': document.getElementById('profile-container'),
                 'catalog': document.getElementById('catalog-container'),
                 'cart': document.getElementById('cart-container')
             };
             
-            tabs.forEach(tab => {
-                tab.addEventListener('click', () => {
-                    const tabName = tab.getAttribute('data-tab');
+            // По умолчанию показываем главную
+            containers['home'].style.display = 'block';
+            document.querySelector('.nav-button[data-tab="home"]').classList.add('active');
+            
+            navButtons.forEach(button => {
+                button.addEventListener('click', () => {
+                    const tabName = button.getAttribute('data-tab');
                     
-                    // Активация вкладки
-                    tabs.forEach(t => t.classList.remove('active'));
-                    tab.classList.add('active');
+                    // Активация кнопки
+                    navButtons.forEach(b => b.classList.remove('active'));
+                    button.classList.add('active');
                     
-                    // Отображение соответствующего контейнера
-                    Object.keys(containers).forEach(key => {
-                        if (key === tabName) {
-                            containers[key].style.display = 'block';
-                        } else {
-                            containers[key].style.display = 'none';
+                    // Добавляем анимацию скрытия
+                    Object.values(containers).forEach(container => {
+                        if (container.style.display === 'block') {
+                            container.style.opacity = '0';
+                            container.style.transform = 'translateY(10px)';
                         }
                     });
+                    
+                    // Отображение соответствующего контейнера с небольшой задержкой для анимации
+                    setTimeout(() => {
+                        Object.keys(containers).forEach(key => {
+                            if (key === tabName) {
+                                containers[key].style.display = 'block';
+                                // Запускаем анимацию появления
+                                setTimeout(() => {
+                                    containers[key].style.opacity = '1';
+                                    containers[key].style.transform = 'translateY(0)';
+                                }, 10);
+                            } else {
+                                containers[key].style.display = 'none';
+                            }
+                        });
+                    }, 200);
                 });
             });
             
@@ -214,6 +268,39 @@
                     document.getElementById('profile-username').textContent = `@${user.username}`;
                 }
             }
+            
+            // Функция для обновления счетчика товаров в корзине
+            function updateCartBadge() {
+                const cartBadge = document.getElementById('cart-badge');
+                // Получаем корзину из localStorage
+                const cart = JSON.parse(localStorage.getItem('cart') || '[]');
+                const itemCount = cart.reduce((total, item) => total + item.quantity, 0);
+                
+                if (itemCount > 0) {
+                    cartBadge.textContent = itemCount > 99 ? '99+' : itemCount;
+                    cartBadge.classList.add('visible');
+                } else {
+                    cartBadge.textContent = '0';
+                    cartBadge.classList.remove('visible');
+                }
+            }
+            
+            // Обновляем счетчик при загрузке
+            updateCartBadge();
+            
+            // Обновляем счетчик каждый раз, когда меняется корзина
+            window.addEventListener('cart-updated', updateCartBadge);
+            
+            // Добавляем эффекты при нажатии на кнопки
+            document.querySelectorAll('.btn, .nav-button, .address-item').forEach(elem => {
+                elem.addEventListener('touchstart', function() {
+                    this.style.transform = 'scale(0.98)';
+                }, { passive: true });
+                
+                elem.addEventListener('touchend', function() {
+                    this.style.transform = 'scale(1)';
+                }, { passive: true });
+            });
         });
     </script>
 </body>

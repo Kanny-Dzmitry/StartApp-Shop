@@ -28,6 +28,7 @@ urlpatterns = [
     path('', telegram_app_view, name='telegram-app'),  # Главная страница - Telegram Mini App
     path('catalog/', include('catalog.urls', namespace='catalog')),  # URL для каталога товаров
     path('api/catalog/', include('catalog.api_urls', namespace='catalog_api')),  # API URL для каталога товаров
+    path('api/cart/', include('cart.api_urls', namespace='cart_api')),  # API URL для корзины
 ]
 
 # Добавляем обработку статических файлов в режиме разработки

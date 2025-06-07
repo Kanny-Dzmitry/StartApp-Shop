@@ -18,11 +18,14 @@ function initCatalog() {
     document.getElementById('back-to-categories').addEventListener('click', showCategories);
     document.getElementById('back-to-sections').addEventListener('click', () => {
         if (currentCategory) {
-            showSections(currentCategory.slug);
+            loadSections(currentCategory.slug);
         } else {
             showCategories();
         }
     });
+    
+    // Добавляем обработчик событий для подсветки товаров в корзине
+    window.addEventListener('cart-updated', highlightProductsInCart);
 }
 
 // Определение и применение темы Telegram
@@ -251,14 +254,14 @@ function loadProducts(categorySlug, sectionSlug) {
     fetch(`/api/catalog/categories/${categorySlug}/sections/${sectionSlug}/`)
         .then(response => {
             if (!response.ok) {
-                throw new Error('Ошибка при получении информации о разделе');
+                throw new Error('Ошибка при получении данных раздела');
             }
             return response.json();
         })
-        .then(section => {
-            currentSection = section;
+        .then(data => {
+            currentSection = data;
             
-            // После получения раздела загружаем товары
+            // Загружаем товары раздела
             return fetch(`/api/catalog/categories/${categorySlug}/sections/${sectionSlug}/products/`);
         })
         .then(response => {
@@ -271,6 +274,11 @@ function loadProducts(categorySlug, sectionSlug) {
             currentProducts = data;
             showProducts();
             hideLoading('catalog-content');
+            
+            // После отображения товаров обновляем их карточки с учетом товаров в корзине
+            if (typeof updateProductCardsInCatalog === 'function') {
+                updateProductCardsInCatalog();
+            }
         })
         .catch(error => {
             console.error('Error:', error);
@@ -320,6 +328,16 @@ function showProducts() {
     
     // Скрываем индикатор загрузки
     hideLoading('catalog-content');
+    
+    // Подсвечиваем товары, которые уже в корзине
+    if (typeof cart !== 'undefined' && cart) {
+        highlightProductsInCart();
+    } else if (typeof loadCart === 'function') {
+        // Если корзина еще не загружена, но функция loadCart доступна
+        loadCart().then(() => {
+            highlightProductsInCart();
+        });
+    }
 }
 
 // Создание карточки товара
@@ -348,17 +366,43 @@ function createProductCard(product) {
     productName.textContent = product.name;
     productInfo.appendChild(productName);
     
+    // Блок с ценой и количеством
+    const priceQuantityBlock = document.createElement('div');
+    priceQuantityBlock.className = 'product-price-quantity';
+    
     // Цена товара
     const productPrice = document.createElement('div');
     productPrice.className = 'product-price';
     productPrice.textContent = `${product.price} ₽`;
-    productInfo.appendChild(productPrice);
+    priceQuantityBlock.appendChild(productPrice);
     
     // Количество товара
     const productQuantity = document.createElement('div');
     productQuantity.className = 'product-quantity';
     productQuantity.textContent = `${product.quantity_value} ${product.quantity_type}`;
-    productInfo.appendChild(productQuantity);
+    priceQuantityBlock.appendChild(productQuantity);
+    
+    // Добавляем блок с ценой и количеством в информацию о товаре
+    productInfo.appendChild(priceQuantityBlock);
+    
+    // Добавляем описание товара, если оно есть
+    if (product.description) {
+        // Контейнер для описания
+        const productDescription = document.createElement('div');
+        productDescription.className = 'product-description collapsed';
+        productDescription.textContent = product.description;
+        productInfo.appendChild(productDescription);
+        
+        // Кнопка "Показать больше"
+        const showMoreBtn = document.createElement('button');
+        showMoreBtn.className = 'show-more-btn';
+        showMoreBtn.textContent = 'Показать больше';
+        showMoreBtn.addEventListener('click', (e) => {
+            e.stopPropagation(); // Предотвращаем всплытие события
+            toggleDescription(productDescription, showMoreBtn);
+        });
+        productInfo.appendChild(showMoreBtn);
+    }
     
     productCard.appendChild(productInfo);
     
@@ -382,15 +426,75 @@ function createProductCard(product) {
 
 // Добавление товара в корзину
 function addToCart(productId) {
-    // Здесь будет логика добавления товара в корзину
-    console.log(`Добавление товара ${productId} в корзину`);
-    showMessage(`Товар добавлен в корзину`);
+    // Если функция добавления товара в корзину доступна из cart.js, используем её
+    if (typeof addProductToCart === 'function') {
+        addProductToCart(productId);
+    } else {
+        // Запасной вариант, если cart.js не загружен
+        console.log(`Добавление товара ${productId} в корзину`);
+        // Добавляем подсветку карточки товара
+        highlightProductCard(productId);
+    }
+}
+
+// Подсветка карточки товара при добавлении в корзину
+function highlightProductCard(productId) {
+    const productCard = document.querySelector(`.product-card[data-id="${productId}"]`);
+    if (!productCard) return;
+    
+    // Добавляем класс для подсветки
+    productCard.classList.add('product-added');
+    
+    // Убираем класс через 1.5 секунды
+    setTimeout(() => {
+        productCard.classList.remove('product-added');
+    }, 1500);
+}
+
+// Подсветка товаров, находящихся в корзине
+function highlightProductsInCart() {
+    // Проверяем доступность корзины
+    if (typeof cart === 'undefined' || !cart || !cart.items) return;
+    
+    // Получаем все карточки товаров на странице
+    const productCards = document.querySelectorAll('.product-card');
+    
+    // Перебираем все карточки и проверяем, есть ли товар в корзине
+    productCards.forEach(card => {
+        const productId = parseInt(card.getAttribute('data-id'));
+        if (!productId) return;
+        
+        // Проверяем, есть ли товар в корзине
+        const inCart = cart.items.some(item => item.product.id === productId);
+        
+        // Добавляем или убираем класс подсветки
+        if (inCart) {
+            card.classList.add('product-in-cart');
+        } else {
+            card.classList.remove('product-in-cart');
+        }
+    });
 }
 
 // Отображение детальной информации о товаре
 function showProductDetails(product) {
     // Здесь будет логика отображения детальной информации о товаре
     console.log(`Просмотр информации о товаре ${product.id}`);
+}
+
+// Переключение между кратким и полным описанием товара
+function toggleDescription(descriptionElement, buttonElement) {
+    if (descriptionElement.classList.contains('collapsed')) {
+        // Раскрываем описание
+        descriptionElement.classList.remove('collapsed');
+        descriptionElement.classList.add('expanded');
+        buttonElement.textContent = 'Скрыть';
+    } else {
+        // Сворачиваем описание
+        descriptionElement.classList.remove('expanded');
+        descriptionElement.classList.add('collapsed');
+        buttonElement.textContent = 'Показать больше';
+    }
 }
 
 // Показать индикатор загрузки
@@ -451,7 +555,7 @@ function showMessage(message) {
 // Инициализация при загрузке страницы
 document.addEventListener('DOMContentLoaded', () => {
     // Инициализируем каталог при переключении на вкладку каталога
-    const catalogTab = document.querySelector('.nav-tab[data-tab="catalog"]');
+    const catalogTab = document.querySelector('.nav-button[data-tab="catalog"]');
     if (catalogTab) {
         catalogTab.addEventListener('click', () => {
             if (categories.length === 0) {
