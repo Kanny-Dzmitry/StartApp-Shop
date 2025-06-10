@@ -1,4 +1,4 @@
-/* Стили для корзины товаров */
+Стили для корзины товаров
 
 /* Общие стили для элементов с взаимодействием */
 .cart-item, .quantity-btn, .delete-cart-item-btn, .checkout-button {
@@ -500,4 +500,29 @@ body.updating .checkout-button {
     100% {
         color: var(--tg-theme-text-color);
     }
+}
+
+/* Контейнер для кнопки оформления заказа внизу */
+.checkout-button-container {
+    padding: 15px;
+    margin-top: 10px;
+    margin-bottom: 10px;
+    display: flex;
+    justify-content: center;
+}
+
+/* Кнопка оформления заказа внизу */
+.checkout-btn {
+    background-color: var(--tg-theme-button-color, #3498db);
+    color: var(--tg-theme-button-text-color, white);
+    border: none;
+    border-radius: 8px;
+    padding: 12px 24px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    width: 100%;
+    max-width: 300px;
+    position: relative;
+    overflow: hidden;
 } 

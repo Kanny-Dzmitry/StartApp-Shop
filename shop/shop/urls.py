@@ -29,6 +29,8 @@ urlpatterns = [
     path('catalog/', include('catalog.urls', namespace='catalog')),  # URL для каталога товаров
     path('api/catalog/', include('catalog.api_urls', namespace='catalog_api')),  # API URL для каталога товаров
     path('api/cart/', include('cart.api_urls', namespace='cart_api')),  # API URL для корзины
+    path('api/checkout/', include('checkout.api_urls', namespace='checkout_api')),  # API URL для оформления заказа
+    path('api/orders/', include('orders.urls')),  # API URL для заказов
 ]
 
 # Добавляем обработку статических файлов в режиме разработки

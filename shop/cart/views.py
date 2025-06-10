@@ -15,34 +15,66 @@ class CartMixin:
     def get_or_create_cart(self, request):
         """Получить или создать корзину для пользователя или сессии"""
         if request.user.is_authenticated:
-            # Для авторизованных пользователей
+            # Для авторизованных пользователей - всегда ищем по user_id
             cart, created = Cart.objects.get_or_create(user=request.user, defaults={
                 'session_id': None
             })
-            # Если пользователь авторизовался и у него была корзина по сессии,
-            # то можно объединить корзины
+            
+            # Получаем session_id из запроса
             session_id = request.session.get('cart_id')
+            
             if session_id:
                 try:
-                    session_cart = Cart.objects.get(session_id=session_id, user__isnull=True)
-                    # Объединяем корзины
-                    self.merge_carts(session_cart, cart)
-                    # Удаляем старую корзину
-                    session_cart.delete()
-                    # Удаляем идентификатор корзины из сессии
+                    # Ищем корзины по session_id, не привязанные к пользователю
+                    session_carts = Cart.objects.filter(session_id=session_id, user__isnull=True)
+                    
+                    for session_cart in session_carts:
+                        # Объединяем каждую найденную корзину с текущей
+                        self.merge_carts(session_cart, cart)
+                        # Удаляем объединённую корзину
+                        session_cart.delete()
+                    
+                    # Удаляем идентификатор корзины из сессии, так как теперь используем user_id
                     del request.session['cart_id']
-                except Cart.DoesNotExist:
-                    pass
+                    # Сохраняем сессию
+                    request.session.save()
+                    
+                except Exception as e:
+                    print(f"Ошибка при объединении корзин: {e}")
+                    # В случае ошибки продолжаем работу с текущей корзиной
+            
+            # Обязательно возвращаем корзину пользователя
+            return cart
         else:
             # Для неавторизованных пользователей используем сессию
             session_id = request.session.get('cart_id')
+            
+            # Если сессия не установлена, создаём новую
             if not session_id:
                 session_id = str(uuid.uuid4())
                 request.session['cart_id'] = session_id
+                # Сохраняем сессию
+                request.session.save()
+                request.session.modified = True
             
-            cart, created = Cart.objects.get_or_create(session_id=session_id, defaults={
-                'user': None
-            })
+            # Пытаемся найти корзину по session_id
+            try:
+                cart = Cart.objects.get(session_id=session_id, user__isnull=True)
+            except Cart.DoesNotExist:
+                # Если не найдена, создаём новую
+                cart = Cart.objects.create(
+                    session_id=session_id,
+                    user=None
+                )
+            except Cart.MultipleObjectsReturned:
+                # Если нашлось несколько корзин (аномальная ситуация), берём первую
+                carts = Cart.objects.filter(session_id=session_id, user__isnull=True)
+                cart = carts.first()
+                
+                # Остальные корзины можно либо удалить, либо объединить с первой
+                for other_cart in carts[1:]:
+                    self.merge_carts(other_cart, cart)
+                    other_cart.delete()
         
         return cart
     
@@ -68,7 +100,17 @@ class CartView(CartMixin, views.APIView):
     
     def get(self, request, *args, **kwargs):
         """Получить текущую корзину"""
+        # Получаем или создаем корзину
         cart = self.get_or_create_cart(request)
+        
+        # Проверяем, авторизован ли пользователь
+        if request.user.is_authenticated and cart.user != request.user:
+            # Если пользователь авторизован, но корзина не привязана к нему,
+            # привязываем корзину к пользователю
+            cart.user = request.user
+            cart.save()
+        
+        # Возвращаем сериализованные данные корзины
         serializer = CartSerializer(cart)
         return Response(serializer.data)
 
@@ -81,7 +123,16 @@ class CartItemAddView(CartMixin, views.APIView):
         """Добавить товар в корзину"""
         serializer = CartItemAddSerializer(data=request.data)
         if serializer.is_valid():
+            # Получаем или создаем корзину
             cart = self.get_or_create_cart(request)
+            
+            # Проверяем, авторизован ли пользователь
+            if request.user.is_authenticated and cart.user != request.user:
+                # Если пользователь авторизован, но корзина не привязана к нему,
+                # привязываем корзину к пользователю
+                cart.user = request.user
+                cart.save()
+            
             product = serializer.validated_data['product_id']
             quantity = serializer.validated_data['quantity']
             
@@ -110,7 +161,16 @@ class CartItemUpdateView(CartMixin, views.APIView):
     def put(self, request, *args, **kwargs):
         """Обновить количество товара в корзине"""
         item_id = kwargs.get('item_id')
+        
+        # Получаем или создаем корзину
         cart = self.get_or_create_cart(request)
+        
+        # Проверяем, авторизован ли пользователь
+        if request.user.is_authenticated and cart.user != request.user:
+            # Если пользователь авторизован, но корзина не привязана к нему,
+            # привязываем корзину к пользователю
+            cart.user = request.user
+            cart.save()
         
         try:
             cart_item = cart.items.get(id=item_id)
@@ -144,7 +204,16 @@ class CartItemDeleteView(CartMixin, views.APIView):
     def delete(self, request, *args, **kwargs):
         """Удалить товар из корзины"""
         item_id = kwargs.get('item_id')
+        
+        # Получаем или создаем корзину
         cart = self.get_or_create_cart(request)
+        
+        # Проверяем, авторизован ли пользователь
+        if request.user.is_authenticated and cart.user != request.user:
+            # Если пользователь авторизован, но корзина не привязана к нему,
+            # привязываем корзину к пользователю
+            cart.user = request.user
+            cart.save()
         
         try:
             cart_item = cart.items.get(id=item_id)
@@ -165,8 +234,26 @@ class CartClearView(CartMixin, views.APIView):
     permission_classes = [AllowAny]
     
     def post(self, request, *args, **kwargs):
-        """Очистить корзину"""
+        """Очистить корзину (POST метод)"""
+        return self.clear_cart(request)
+    
+    def delete(self, request, *args, **kwargs):
+        """Очистить корзину (DELETE метод)"""
+        return self.clear_cart(request)
+    
+    def clear_cart(self, request):
+        """Метод для очистки корзины"""
+        # Получаем или создаем корзину
         cart = self.get_or_create_cart(request)
+        
+        # Проверяем, авторизован ли пользователь
+        if request.user.is_authenticated and cart.user != request.user:
+            # Если пользователь авторизован, но корзина не привязана к нему,
+            # привязываем корзину к пользователю
+            cart.user = request.user
+            cart.save()
+        
+        # Удаляем все товары из корзины
         cart.items.all().delete()
         
         # Возвращаем пустую корзину

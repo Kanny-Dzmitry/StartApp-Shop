@@ -41,6 +41,7 @@ INSTALLED_APPS = [
     'accounts',
     'catalog',
     'cart',
+    'orders',
     'rest_framework',
     'rest_framework.authtoken',
     'corsheaders',

@@ -7,6 +7,7 @@
     <link rel="stylesheet" href="/static/css/telegram-app.css">
     <link rel="stylesheet" href="/static/css/catalog.css">
     <link rel="stylesheet" href="/static/css/cart.css">
+    <link rel="stylesheet" href="/static/css/checkout.css">
     <!-- Telegram WebApp JS SDK -->
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
 </head>
@@ -171,6 +172,78 @@
             <!-- Контент корзины будет добавлен через JavaScript -->
         </div>
         
+        <!-- Секция оформления заказа -->
+        <div id="checkout-container" class="checkout-container" style="display: none;">
+            <div class="checkout-header">
+                <button id="back-to-cart-btn" class="back-to-cart">
+                    <svg width="24" height="24" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M19 12H5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M12 19l-7-7 7-7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                    Вернуться в корзину
+                </button>
+            </div>
+            
+            <h2 class="checkout-title">Оформление заказа</h2>
+            
+            <div class="checkout-section">
+                <h3 class="checkout-section-title">Данные получателя</h3>
+                <div id="checkout-user-info" class="user-info">
+                    <!-- Данные пользователя будут добавлены через JavaScript -->
+                </div>
+            </div>
+            
+            <div class="checkout-section">
+                <h3 class="checkout-section-title">Адрес доставки</h3>
+                <div id="checkout-address-section" class="address-section">
+                    <div id="checkout-addresses-list" class="checkout-addresses-list">
+                        <!-- Список адресов будет добавлен через JavaScript -->
+                    </div>
+                </div>
+            </div>
+            
+            <div class="checkout-section">
+                <h3 class="checkout-section-title">Способ оплаты</h3>
+                <div id="checkout-payment-method" class="payment-method-section">
+                    <div class="payment-methods">
+                        <label class="payment-method-item">
+                            <input type="radio" name="payment-method" value="cash" checked>
+                            <span class="payment-method-content">
+                                <span class="payment-method-icon">💵</span>
+                                <span class="payment-method-title">Наличными при получении</span>
+                            </span>
+                        </label>
+                        <label class="payment-method-item">
+                            <input type="radio" name="payment-method" value="card">
+                            <span class="payment-method-content">
+                                <span class="payment-method-icon">💳</span>
+                                <span class="payment-method-title">Картой при получении</span>
+                            </span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="checkout-section">
+                <h3 class="checkout-section-title">Комментарий к заказу</h3>
+                <div class="order-comment-section">
+                    <textarea id="order-comment" class="order-comment-input" placeholder="Напишите комментарий к заказу (необязательно)" maxlength="500"></textarea>
+                    <div class="comment-counter"><span id="comment-length">0</span>/500</div>
+                </div>
+            </div>
+            
+            <div class="checkout-section">
+                <h3 class="checkout-section-title">Ваш заказ</h3>
+                <div id="checkout-order-summary" class="order-summary">
+                    <!-- Товары и сумма заказа будут добавлены через JavaScript -->
+                </div>
+            </div>
+            
+            <div class="checkout-actions">
+                <button id="complete-order-btn" class="btn-checkout">Оформить заказ</button>
+            </div>
+        </div>
+        
         <!-- Навигация внизу страницы -->
         <div class="bottom-nav">
             <div class="nav-button" data-tab="home">
@@ -201,11 +274,16 @@
         </div>
     </div>
     
+    <!-- Контейнеры для сообщений -->
+    <div id="error-message" class="message error-message" style="display: none;"></div>
+    <div id="success-message" class="message success-message" style="display: none;"></div>
+    
     <!-- Подключение скриптов -->
     <script src="/static/js/telegram-auth.js"></script>
     <script src="/static/js/profile.js"></script>
     <script src="/static/js/cart.js"></script>
     <script src="/static/js/catalog.js"></script>
+    <script src="/static/js/checkout.js"></script>
     <script>
         // Переключение между вкладками
         document.addEventListener('DOMContentLoaded', () => {
@@ -246,6 +324,11 @@
                                 setTimeout(() => {
                                     containers[key].style.opacity = '1';
                                     containers[key].style.transform = 'translateY(0)';
+                                    
+                                    // Если переключились на вкладку корзины, принудительно загружаем корзину
+                                    if (key === 'cart' && typeof loadCart === 'function') {
+                                        loadCart();
+                                    }
                                 }, 10);
                             } else {
                                 containers[key].style.display = 'none';
@@ -285,11 +368,39 @@
                 }
             }
             
+            // Переопределяем функцию addNewAddress из profile.js для сохранения навигации
+            const originalAddNewAddress = window.addNewAddress;
+            window.addNewAddress = function() {
+                // Показываем нижнюю навигацию
+                const bottomNav = document.querySelector('.bottom-nav');
+                if (bottomNav) {
+                    bottomNav.style.display = 'flex';
+                }
+                
+                // Вызываем оригинальную функцию
+                if (typeof originalAddNewAddress === 'function') {
+                    originalAddNewAddress();
+                }
+            };
+            
             // Обновляем счетчик при загрузке
             updateCartBadge();
             
             // Обновляем счетчик каждый раз, когда меняется корзина
             window.addEventListener('cart-updated', updateCartBadge);
+            
+            // Добавляем перезагрузку корзины при возвращении на страницу
+            if (window.Telegram && window.Telegram.WebApp) {
+                window.Telegram.WebApp.onEvent('viewportChanged', () => {
+                    if (window.Telegram.WebApp.isExpanded) {
+                        // Если корзина видима, обновляем её
+                        const cartContainer = document.getElementById('cart-container');
+                        if (cartContainer && cartContainer.style.display === 'block' && typeof loadCart === 'function') {
+                            loadCart();
+                        }
+                    }
+                });
+            }
             
             // Добавляем эффекты при нажатии на кнопки
             document.querySelectorAll('.btn, .nav-button, .address-item').forEach(elem => {

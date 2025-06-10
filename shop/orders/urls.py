@@ -1,0 +1,8 @@
+from django.urls import path
+from .views import OrderViewSet
+
+urlpatterns = [
+    path('create/', OrderViewSet.as_view({'post': 'create_order'}), name='create_order'),
+    path('', OrderViewSet.as_view({'get': 'list'}), name='orders_list'),
+    path('<int:pk>/', OrderViewSet.as_view({'get': 'retrieve'}), name='order_detail'),
+] 

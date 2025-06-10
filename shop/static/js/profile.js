@@ -422,6 +422,12 @@ function addNewAddress() {
     
     // Show address edit mode
     toggleAddressEditMode(true);
+    
+    // Всегда показываем нижнюю навигацию при добавлении адреса
+    const bottomNav = document.querySelector('.bottom-nav');
+    if (bottomNav) {
+        bottomNav.style.display = 'flex';
+    }
 }
 
 // Toggle edit mode
@@ -460,13 +466,33 @@ function toggleAddressEditMode(show) {
 
 // Request user's location using Telegram WebApp API
 function requestLocation() {
+    // Показываем индикатор загрузки
+    const spinner = document.getElementById('location-spinner');
+    if (spinner) {
+        spinner.style.display = 'inline-block';
+    }
+    
+    console.log("Начинаем запрос местоположения...");
+    
+    // Проверяем доступность Telegram WebApp API
     if (window.Telegram && window.Telegram.WebApp) {
+        console.log("Telegram WebApp API доступен");
+        
         try {
-            // Показываем индикатор загрузки
-            document.getElementById('location-spinner').style.display = 'inline-block';
+            console.log("WebApp версия:", window.Telegram.WebApp.version);
+            console.log("WebApp платформа:", window.Telegram.WebApp.platform);
+            
+            // Проверяем возможности WebApp
+            const capabilities = [];
+            if (window.Telegram.WebApp.isVersionAtLeast) capabilities.push("isVersionAtLeast");
+            if (window.Telegram.WebApp.showPopup) capabilities.push("showPopup");
+            if (window.Telegram.WebApp.requestLocation) capabilities.push("requestLocation");
+            console.log("WebApp возможности:", capabilities.join(", "));
             
             // В новых версиях API используется метод showPopup для запроса геолокации
             if (window.Telegram.WebApp.showPopup) {
+                console.log("Используем WebApp.showPopup для запроса");
+                
                 window.Telegram.WebApp.showPopup({
                     title: "Местоположение",
                     message: "Поделитесь своим местоположением для автоматического заполнения адреса",
@@ -474,104 +500,245 @@ function requestLocation() {
                         {id: "share_location", type: "default", text: "Поделиться"}
                     ]
                 }, function(buttonId) {
+                    console.log("Ответ на showPopup:", buttonId);
+                    
                     if (buttonId === "share_location") {
                         // После нажатия кнопки запрашиваем геолокацию
                         if (window.Telegram.WebApp.requestLocation) {
+                            console.log("Используем WebApp.requestLocation");
+                            showMessage("Запрашиваем местоположение через Telegram...");
+                            
                             window.Telegram.WebApp.requestLocation(handleLocationResult, handleLocationError);
                         } else {
                             // Если метод requestLocation недоступен, используем браузерное API
+                            console.log("WebApp.requestLocation недоступен, используем браузерную геолокацию");
                             useBrowserGeolocation();
                         }
                     } else {
                         // Пользователь отменил действие
-                        document.getElementById('location-spinner').style.display = 'none';
+                        console.log("Пользователь отменил запрос местоположения");
+                        showError("Вы отменили запрос местоположения");
+                        
+                        if (spinner) {
+                            spinner.style.display = 'none';
+                        }
                     }
                 });
             } else if (window.Telegram.WebApp.requestLocation) {
                 // Прямой вызов requestLocation, если доступен
+                console.log("Используем прямой вызов WebApp.requestLocation");
+                showMessage("Запрашиваем местоположение через Telegram...");
+                
                 window.Telegram.WebApp.requestLocation(handleLocationResult, handleLocationError);
             } else {
                 // Если методы Telegram недоступны, используем браузерное API
+                console.log("Методы Telegram WebApp для геолокации недоступны");
+                showMessage("Telegram API не поддерживает определение местоположения, используем браузер");
+                
                 useBrowserGeolocation();
             }
         } catch (error) {
-            console.error("Error requesting location:", error);
-            showError("Ошибка при запросе местоположения");
-            document.getElementById('location-spinner').style.display = 'none';
+            console.error("Ошибка при запросе местоположения:", error);
+            showError("Ошибка при запросе местоположения: " + error.message);
+            
+            if (spinner) {
+                spinner.style.display = 'none';
+            }
+            
+            // При ошибке с Telegram API пробуем использовать браузерную геолокацию
+            setTimeout(() => {
+                console.log("Пробуем использовать браузерную геолокацию после ошибки...");
+                useBrowserGeolocation();
+            }, 1000);
         }
     } else {
         // Если WebApp API недоступен, используем браузерное API геолокации
+        console.log("Telegram WebApp API недоступен, используем браузерную геолокацию");
+        showMessage("Telegram API недоступен, используем браузер");
+        
         useBrowserGeolocation();
     }
 }
 
 // Обработчик успешного получения местоположения
 function handleLocationResult(location) {
+    console.log("Получен результат местоположения:", location);
+    
     if (location && location.latitude && location.longitude) {
+        console.log("Координаты получены:", location.latitude, location.longitude);
+        showMessage("Координаты получены, определяем адрес...");
+        
         // Получаем адрес по координатам
         getAddressFromCoordinates(location.latitude, location.longitude);
     } else {
-        showError("Не удалось получить местоположение");
-        document.getElementById('location-spinner').style.display = 'none';
+        console.error("Получен пустой объект местоположения или отсутствуют координаты");
+        showError("Не удалось получить координаты местоположения");
+        
+        const spinner = document.getElementById('location-spinner');
+        if (spinner) {
+            spinner.style.display = 'none';
+        }
+        
+        // Пробуем использовать браузерную геолокацию как запасной вариант
+        setTimeout(() => {
+            console.log("Пробуем использовать браузерную геолокацию как запасной вариант...");
+            useBrowserGeolocation();
+        }, 1000);
     }
 }
 
 // Обработчик ошибки получения местоположения
-function handleLocationError() {
-    showError("Ошибка при получении местоположения");
-    document.getElementById('location-spinner').style.display = 'none';
+function handleLocationError(error) {
+    console.error("Ошибка при получении местоположения:", error);
+    
+    // Формируем понятное сообщение об ошибке
+    let errorMessage = "Ошибка при получении местоположения";
+    if (error && typeof error === 'string') {
+        errorMessage += ": " + error;
+    } else if (error && error.message) {
+        errorMessage += ": " + error.message;
+    }
+    
+    showError(errorMessage);
+    
+    const spinner = document.getElementById('location-spinner');
+    if (spinner) {
+        spinner.style.display = 'none';
+    }
+    
+    // Пробуем использовать браузерную геолокацию как запасной вариант
+    setTimeout(() => {
+        console.log("Пробуем использовать браузерную геолокацию после ошибки...");
+        useBrowserGeolocation();
+    }, 1000);
 }
 
 // Использование браузерного API геолокации
 function useBrowserGeolocation() {
+    // Показываем индикатор загрузки, если он не показан
+    const spinner = document.getElementById('location-spinner');
+    if (spinner) {
+        spinner.style.display = 'inline-block';
+    }
+    
+    console.log("Пытаемся использовать браузерную геолокацию...");
+    showMessage("Запрашиваем доступ к геолокации...");
+    
     if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(
             function(position) {
+                console.log("Получены координаты:", position.coords.latitude, position.coords.longitude);
+                showMessage("Координаты получены, определяем адрес...");
                 getAddressFromCoordinates(position.coords.latitude, position.coords.longitude);
             },
             function(error) {
-                showError(getGeolocationErrorMessage(error));
-                document.getElementById('location-spinner').style.display = 'none';
+                console.error("Ошибка геолокации:", error);
+                const errorMsg = getGeolocationErrorMessage(error);
+                showError(errorMsg);
+                
+                // Выводим дополнительную информацию в консоль
+                console.error("Код ошибки: " + error.code);
+                console.error("Сообщение: " + error.message);
+                
+                if (spinner) {
+                    spinner.style.display = 'none';
+                }
             },
-            { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+            { 
+                enableHighAccuracy: true, 
+                timeout: 15000,
+                maximumAge: 0 
+            }
         );
     } else {
+        console.error("Геолокация не поддерживается браузером");
         showError("Геолокация не поддерживается вашим браузером");
-        document.getElementById('location-spinner').style.display = 'none';
+        
+        if (spinner) {
+            spinner.style.display = 'none';
+        }
     }
 }
 
 // Получение адреса по координатам (через Nominatim OpenStreetMap API)
 function getAddressFromCoordinates(latitude, longitude) {
-    fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&addressdetails=1&accept-language=ru`)
-        .then(response => response.json())
+    console.log("Запрашиваем адрес по координатам:", latitude, longitude);
+    showMessage("Получаем адрес по координатам...");
+    
+    const url = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&addressdetails=1&accept-language=ru`;
+    console.log("URL запроса:", url);
+    
+    // Добавляем заголовки для решения возможных проблем с CORS
+    fetch(url, {
+        headers: {
+            'Accept': 'application/json',
+            'Origin': window.location.origin
+        }
+    })
+        .then(response => {
+            console.log("Статус ответа:", response.status);
+            if (!response.ok) {
+                throw new Error(`HTTP ошибка! Статус: ${response.status}`);
+            }
+            return response.json();
+        })
         .then(data => {
+            console.log("Получены данные адреса:", data);
+            
             // Скрываем индикатор загрузки
-            document.getElementById('location-spinner').style.display = 'none';
+            const spinner = document.getElementById('location-spinner');
+            if (spinner) {
+                spinner.style.display = 'none';
+            }
             
             if (data && data.address) {
                 // Заполняем поля формы данными из ответа API
                 const address = data.address;
+                console.log("Детали адреса:", address);
                 
                 // Определяем район (может быть в разных полях в зависимости от региона)
-                const district = address.suburb || address.district || address.neighbourhood || address.city_district || '';
-                document.getElementById('district').value = district;
+                const district = address.suburb || address.district || address.neighbourhood || 
+                                address.city_district || address.town || address.city || '';
                 
-                // Улица
-                document.getElementById('street').value = address.road || '';
+                // Определяем улицу
+                const street = address.road || address.street || address.footway || address.path || '';
                 
-                // Номер дома
-                document.getElementById('house-number').value = address.house_number || '';
+                // Определяем номер дома
+                const houseNumber = address.house_number || '';
                 
-                showMessage("Адрес успешно определен");
+                console.log("Извлеченные данные:", {
+                    district: district,
+                    street: street, 
+                    houseNumber: houseNumber
+                });
+                
+                // Заполняем поля формы
+                const districtField = document.getElementById('district');
+                const streetField = document.getElementById('street');
+                const houseNumberField = document.getElementById('house-number');
+                
+                if (districtField) districtField.value = district;
+                if (streetField) streetField.value = street;
+                if (houseNumberField) houseNumberField.value = houseNumber;
+                
+                if (district || street || houseNumber) {
+                    showMessage("Адрес успешно определен");
+                } else {
+                    showMessage("Адрес определен частично, заполните недостающие поля");
+                }
             } else {
+                console.error("Не удалось получить данные адреса из ответа");
                 showError("Не удалось определить адрес по координатам");
             }
         })
         .catch(error => {
-            console.error("Error getting address:", error);
-            showError("Ошибка при получении адреса");
-            document.getElementById('location-spinner').style.display = 'none';
+            console.error("Ошибка при получении адреса:", error);
+            showError("Ошибка при получении адреса: " + error.message);
+            
+            const spinner = document.getElementById('location-spinner');
+            if (spinner) {
+                spinner.style.display = 'none';
+            }
         });
 }
 

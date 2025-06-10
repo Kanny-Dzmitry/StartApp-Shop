@@ -22,12 +22,23 @@ class Cart(models.Model):
     @property
     def total_price(self):
         """Расчет общей стоимости корзины"""
-        return sum(item.total_price for item in self.items.all())
+        # Используем Decimal(0) как начальное значение и добавляем проверку на None
+        result = Decimal('0.00')
+        for item in self.items.all():
+            try:
+                result += item.total_price
+            except (TypeError, ValueError):
+                # Пропускаем элементы с ошибками
+                pass
+        return result
     
     @property
     def total_items(self):
         """Общее количество товаров в корзине"""
-        return sum(item.quantity for item in self.items.all())
+        try:
+            return sum(item.quantity for item in self.items.all())
+        except (TypeError, ValueError):
+            return 0
 
 
 class CartItem(models.Model):
@@ -50,4 +61,6 @@ class CartItem(models.Model):
     @property
     def total_price(self):
         """Расчет общей стоимости товара с учетом количества"""
+        if self.product is None or getattr(self.product, 'price', None) is None:
+            return Decimal('0.00')
         return Decimal(self.product.price) * Decimal(self.quantity)
