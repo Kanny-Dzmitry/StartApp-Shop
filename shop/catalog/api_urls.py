@@ -17,4 +17,7 @@ urlpatterns = [
          api_views.ProductListAPIView.as_view(), name='product_list'),
     path('categories/<slug:category_slug>/sections/<slug:section_slug>/products/<slug:slug>/', 
          api_views.ProductDetailAPIView.as_view(), name='product_detail'),
+         
+    # API для поиска товаров
+    path('search/products/', api_views.ProductSearchAPIView.as_view(), name='product_search'),
 ] 

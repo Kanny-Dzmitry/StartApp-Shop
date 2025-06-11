@@ -4,6 +4,41 @@ from accounts.models import UserAddress
 from catalog.models import Product
 from decimal import Decimal
 
+class DeliverySettings(models.Model):
+    free_delivery_threshold = models.DecimalField(
+        max_digits=10, 
+        decimal_places=2, 
+        default=8000, 
+        verbose_name='Порог бесплатной доставки'
+    )
+    delivery_cost = models.DecimalField(
+        max_digits=10, 
+        decimal_places=2, 
+        default=1000, 
+        verbose_name='Стоимость доставки'
+    )
+    is_active = models.BooleanField(
+        default=True,
+        verbose_name='Активно'
+    )
+    
+    class Meta:
+        verbose_name = 'Настройки доставки'
+        verbose_name_plural = 'Настройки доставки'
+    
+    def __str__(self):
+        status = "Активно" if self.is_active else "Неактивно"
+        return f"Бесплатная доставка от {self.free_delivery_threshold} ₽, стоимость доставки: {self.delivery_cost} ₽ ({status})"
+    
+    @classmethod
+    def get_settings(cls):
+        """Получить активные настройки доставки или создать настройки по умолчанию"""
+        settings = cls.objects.filter(is_active=True).first()
+        if not settings:
+            # Если нет активных настроек, создаем новые
+            settings = cls.objects.create(is_active=True)
+        return settings
+
 class Order(models.Model):
     PAYMENT_METHODS = (
         ('cash', 'Наличными при получении'),
@@ -26,6 +61,7 @@ class Order(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
     total_price = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     comment = models.TextField(blank=True, null=True, verbose_name='Комментарий к заказу')
+    delivery_cost = models.DecimalField(max_digits=10, decimal_places=2, default=0, verbose_name='Стоимость доставки')
     
     def __str__(self):
         return f"Заказ #{self.id} от {self.user.username}"

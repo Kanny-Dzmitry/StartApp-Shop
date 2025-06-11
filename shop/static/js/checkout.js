@@ -5,6 +5,10 @@ let userAddresses = [];
 let selectedAddressId = null;
 let selectedPaymentMethod = 'cash';
 let orderComment = '';
+let deliverySettings = {
+    free_delivery_threshold: 8000,
+    delivery_cost: 1000
+};
 
 // Инициализация страницы оформления заказа
 function initCheckout() {
@@ -23,6 +27,9 @@ function initCheckout() {
         
         return;
     }
+    
+    // Получаем настройки доставки
+    fetchDeliverySettings();
     
     // Получаем данные пользователя
     fetchUserData();
@@ -59,6 +66,33 @@ function initCheckout() {
         // Инициализация обработчика для поля комментария
         initializeCommentField();
     });
+}
+
+// Получение настроек доставки
+function fetchDeliverySettings() {
+    return fetch('/api/orders/delivery/settings/')
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Не удалось получить настройки доставки');
+            }
+            return response.json();
+        })
+        .then(data => {
+            deliverySettings = data;
+            console.log('Настройки доставки:', deliverySettings);
+            
+            // Если данные корзины уже получены, обновляем сводку заказа
+            if (cartData) {
+                renderOrderSummary();
+            }
+            
+            return data;
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            // Используем значения по умолчанию
+            return deliverySettings;
+        });
 }
 
 // Получение данных пользователя с сервера
@@ -435,6 +469,18 @@ function renderOrderSummary() {
     
     orderSummary.appendChild(orderItems);
     
+    // Рассчитываем стоимость доставки
+    const cartTotal = parseFloat(cartData.total_price);
+    const freeDeliveryThreshold = parseFloat(deliverySettings.free_delivery_threshold);
+    const deliveryCost = parseFloat(deliverySettings.delivery_cost);
+    
+    // Определяем, бесплатная ли доставка
+    const isFreeDelivery = cartTotal >= freeDeliveryThreshold;
+    const finalDeliveryCost = isFreeDelivery ? 0 : deliveryCost;
+    
+    // Рассчитываем итоговую сумму с доставкой
+    const totalWithDelivery = cartTotal + finalDeliveryCost;
+    
     // Добавляем итоговую сумму
     const orderTotals = document.createElement('div');
     orderTotals.className = 'order-totals';
@@ -462,10 +508,31 @@ function renderOrderSummary() {
     deliveryRow.appendChild(deliveryLabel);
     
     const deliveryValue = document.createElement('div');
-    deliveryValue.textContent = 'Бесплатно';
+    if (isFreeDelivery) {
+        deliveryValue.textContent = 'Бесплатно';
+        deliveryValue.style.color = '#4CAF50';
+    } else {
+        deliveryValue.textContent = `${deliveryCost} ₽`;
+    }
     deliveryRow.appendChild(deliveryValue);
     
     orderTotals.appendChild(deliveryRow);
+    
+    // Информация о бесплатной доставке
+    if (!isFreeDelivery) {
+        const deliveryInfoRow = document.createElement('div');
+        deliveryInfoRow.className = 'order-delivery-info';
+        
+        const deliveryInfo = document.createElement('div');
+        const remainingForFree = freeDeliveryThreshold - cartTotal;
+        deliveryInfo.textContent = `Добавьте товаров на ${remainingForFree.toFixed(2)} ₽ для бесплатной доставки`;
+        deliveryInfo.style.color = '#ff9800';
+        deliveryInfo.style.fontSize = '0.9em';
+        deliveryInfo.style.marginTop = '5px';
+        deliveryInfoRow.appendChild(deliveryInfo);
+        
+        orderTotals.appendChild(deliveryInfoRow);
+    }
     
     // Итого
     const totalRow = document.createElement('div');
@@ -476,7 +543,8 @@ function renderOrderSummary() {
     totalRow.appendChild(totalLabel);
     
     const totalValue = document.createElement('div');
-    totalValue.textContent = `${cartData.total_price} ₽`;
+    totalValue.textContent = `${totalWithDelivery.toFixed(2)} ₽`;
+    totalValue.style.fontWeight = 'bold';
     totalRow.appendChild(totalValue);
     
     orderTotals.appendChild(totalRow);
@@ -675,6 +743,18 @@ function submitOrder() {
     // Получаем текст комментария
     const commentText = document.getElementById('order-comment') ? document.getElementById('order-comment').value.trim() : '';
     
+    // Рассчитываем стоимость доставки
+    const cartTotal = parseFloat(cartData.total_price);
+    const freeDeliveryThreshold = parseFloat(deliverySettings.free_delivery_threshold);
+    const deliveryCost = parseFloat(deliverySettings.delivery_cost);
+    
+    // Определяем, бесплатная ли доставка
+    const isFreeDelivery = cartTotal >= freeDeliveryThreshold;
+    const finalDeliveryCost = isFreeDelivery ? 0 : deliveryCost;
+    
+    // Рассчитываем итоговую сумму с доставкой
+    const totalWithDelivery = cartTotal + finalDeliveryCost;
+    
     // Собираем полные данные для отправки на сервер
     const orderData = {
         address_id: selectedAddressId,
@@ -688,13 +768,15 @@ function submitOrder() {
         },
         comment: commentText, // Добавляем комментарий
         total_items: cartData.items.length,
-        total_price: cartData.total_price
+        total_price: totalWithDelivery.toFixed(2),
+        delivery_cost: finalDeliveryCost.toFixed(2)
     };
     
     // Сохраняем данные заказа для сообщения о результате
     const orderSummary = {
         items: cartData.items.length,
-        total: cartData.total_price,
+        total: totalWithDelivery.toFixed(2),
+        delivery_cost: finalDeliveryCost.toFixed(2),
         address: addressText,
         payment: paymentText,
         comment: commentText
@@ -722,6 +804,7 @@ function submitOrder() {
         const orderMessage = `
             Заказ #${data.id || 'N/A'} успешно принят!
             Сумма: ${data.total_price || orderSummary.total} ₽
+            ${parseFloat(data.delivery_cost || orderSummary.delivery_cost) > 0 ? `Доставка: ${data.delivery_cost || orderSummary.delivery_cost} ₽` : 'Доставка: Бесплатно'}
             Оплата: ${data.payment_method || orderSummary.payment}
             Статус: ${data.status || 'Новый'}
         `;

@@ -5,15 +5,24 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from django.db import transaction
 
-from .models import Order, OrderItem
-from .serializers import OrderSerializer, OrderCreateSerializer
+from .models import Order, OrderItem, DeliverySettings
+from .serializers import OrderSerializer, OrderCreateSerializer, DeliverySettingsSerializer
 from accounts.models import UserAddress
 from catalog.models import Product
 from django.core.exceptions import ObjectDoesNotExist
 from cart.models import Cart, CartItem
 from cart.serializers import CartSerializer
+from decimal import Decimal
 
 # Create your views here.
+
+class DeliverySettingsView(APIView):
+    """Представление для получения настроек доставки"""
+    
+    def get(self, request):
+        settings = DeliverySettings.get_settings()
+        serializer = DeliverySettingsSerializer(settings)
+        return Response(serializer.data)
 
 # Представление для создания и просмотра заказов
 class OrderViewSet(viewsets.ModelViewSet):
@@ -50,6 +59,20 @@ class OrderViewSet(viewsets.ModelViewSet):
             except ObjectDoesNotExist:
                 return Response({"error": "Указанный адрес не найден"}, status=status.HTTP_400_BAD_REQUEST)
             
+            # Получаем настройки доставки
+            delivery_settings = DeliverySettings.get_settings()
+            
+            # Рассчитываем стоимость доставки
+            cart_total = Decimal(cart_data.get('total_price', 0))
+            delivery_cost = Decimal(0)
+            
+            # Если сумма заказа меньше порога бесплатной доставки, добавляем стоимость доставки
+            if cart_total < delivery_settings.free_delivery_threshold:
+                delivery_cost = delivery_settings.delivery_cost
+            
+            # Общая сумма заказа с учетом доставки
+            total_price = cart_total + delivery_cost
+            
             # Создаем заказ в транзакции
             with transaction.atomic():
                 # Создаем заказ с полной информацией
@@ -57,7 +80,8 @@ class OrderViewSet(viewsets.ModelViewSet):
                     user=request.user,
                     address=address,
                     payment_method=serializer.validated_data['payment_method'],
-                    total_price=serializer.validated_data.get('total_price', cart_data.get('total_price', 0)),
+                    total_price=total_price,
+                    delivery_cost=delivery_cost,
                     status='new',
                     comment=serializer.validated_data.get('comment', '')  # Сохраняем комментарий
                 )
@@ -89,6 +113,7 @@ class OrderViewSet(viewsets.ModelViewSet):
                     "message": "Ваш заказ успешно принят! Спасибо за покупку.",
                     "redirect_to": "/",  # Перенаправление на главную страницу
                     "total_price": str(order.total_price),
+                    "delivery_cost": str(order.delivery_cost),
                     "created_at": order.created_at.strftime("%d.%m.%Y %H:%M"),
                     "payment_method": order.get_payment_method_display(),
                     "items_count": order.items.count(),

@@ -2,6 +2,7 @@ from rest_framework import generics, permissions
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from django.shortcuts import get_object_or_404
+from django.db.models import Q
 from .models import Category, Section, Product
 from .serializers import (
     CategorySerializer, CategoryListSerializer,
@@ -81,4 +82,30 @@ class ProductDetailAPIView(generics.RetrieveAPIView):
             section__available=True,
             section__category__available=True,
             available=True
-        ) 
+        )
+
+
+class ProductSearchAPIView(generics.ListAPIView):
+    """API для поиска товаров по названию с автодополнением"""
+    serializer_class = ProductSerializer
+    permission_classes = [permissions.AllowAny]
+    
+    def get_queryset(self):
+        query = self.request.query_params.get('q', '')
+        if not query:
+            return Product.objects.none()
+        
+        # Нормализуем запрос (приводим к нижнему регистру)
+        query_lower = query.lower()
+        
+        # Поиск товаров по названию (нечувствительно к регистру)
+        # Используем Q-объекты для комбинации условий
+        return Product.objects.filter(
+            Q(name__icontains=query) |  # Стандартный поиск без учета регистра
+            Q(name__contains=query) |   # На случай, если icontains не работает с кириллицей
+            Q(name__icontains=query_lower) |  # Поиск по нормализованному запросу
+            Q(description__icontains=query),  # Также ищем в описании
+            available=True,
+            section__available=True,
+            section__category__available=True
+        ).distinct().order_by('name')[:10]  # Используем distinct() для удаления дубликатов 
