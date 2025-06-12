@@ -1,0 +1,173 @@
+/* Стили для улучшения отображения слайдов в админке */
+
+/* Основные стили для inline-форм слайдов */
+.inline-group .inline-related {
+    border: 1px solid var(--border-color, #ddd);
+    border-radius: 8px;
+    margin-bottom: 15px;
+    background-color: var(--body-bg, #f9f9f9);
+    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+    overflow: hidden;
+}
+
+/* Заголовок inline-формы */
+.inline-group .inline-related h3 {
+    background-color: var(--darkened-bg, #f0f0f0);
+    padding: 10px 15px;
+    margin: 0;
+    font-size: 14px;
+    border-bottom: 1px solid var(--border-color, #ddd);
+    color: var(--body-fg, #333);
+}
+
+/* Улучшенный предпросмотр изображения */
+.field-image_preview img {
+    border-radius: 5px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    transition: transform 0.3s ease;
+    max-width: 100%;
+    height: auto;
+}
+
+.field-image_preview img:hover {
+    transform: scale(1.05);
+}
+
+/* Стили для полей с изображениями */
+.field-image, .field-image_preview {
+    padding: 10px 0;
+}
+
+/* Стили для чекбокса видимости */
+.field-is_visible .checkbox {
+    margin-top: 5px;
+}
+
+/* Стили для кнопок сохранения */
+.submit-row {
+    background-color: var(--body-bg, #f8f8f8);
+    padding: 15px;
+    border-radius: 5px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+}
+
+.submit-row input[type="submit"] {
+    transition: background-color 0.3s ease;
+}
+
+/* Стили для открытого/закрытого состояния слайда */
+.inline-related.collapsed h3 {
+    background-color: var(--darkened-bg, #e0e0e0);
+}
+
+.inline-related.collapsed .form-row {
+    display: none;
+}
+
+/* Стили для ссылки на полное редактирование */
+.inline-related .inline_actions {
+    float: right;
+    margin-right: 10px;
+}
+
+.inline-related .viewlink {
+    display: inline-block;
+    padding: 3px 8px;
+    background: var(--primary, #79aec8);
+    color: var(--primary-fg, #fff);
+    border-radius: 4px;
+    font-size: 12px;
+    text-decoration: none;
+    margin-left: 10px;
+}
+
+.inline-related .viewlink:hover {
+    background: var(--primary-dark, #609ab6);
+}
+
+/* Стили для группировки полей */
+.form-row {
+    padding: 10px 15px;
+}
+
+fieldset.module h2 {
+    background-color: var(--primary, #79aec8);
+    color: var(--primary-fg, white);
+    padding: 8px 15px;
+    font-size: 14px;
+    border-radius: 4px 4px 0 0;
+}
+
+/* Улучшенные стили для заголовка слайдов */
+.inline-group .tabular tr.has_original td {
+    padding-top: 12px;
+    background-color: var(--darkened-bg, #f5f5f5);
+}
+
+/* Стили для поля порядка */
+.field-order input {
+    width: 60px;
+    text-align: center;
+}
+
+/* Стили для полей с датами */
+.field-created_at, .field-updated_at {
+    color: var(--body-quiet-color, #666);
+    font-size: 12px;
+}
+
+/* Стили для кнопок управления порядком */
+.order-controls button {
+    background-color: var(--body-bg, #fff);
+    border: 1px solid var(--border-color, #ccc);
+    border-radius: 3px;
+    padding: 2px 8px;
+    cursor: pointer;
+    color: var(--body-fg, #333);
+}
+
+.order-controls button:hover {
+    background-color: var(--primary-light, #f0f0f0);
+}
+
+/* Стили для переключателя видимости */
+.visibility-toggle {
+    display: inline-block;
+    padding: 5px 10px;
+    border-radius: 4px;
+    transition: background-color 0.3s;
+}
+
+.visibility-toggle.visible {
+    background-color: var(--message-success-bg, #dff0d8);
+    color: var(--success-fg, #3c763d);
+}
+
+.visibility-toggle.hidden {
+    background-color: var(--message-error-bg, #f2dede);
+    color: var(--error-fg, #a94442);
+}
+
+/* Стили для предпросмотра изображений */
+.image-preview-container {
+    margin-top: 10px;
+    padding: 10px;
+    background-color: var(--body-bg, #fff);
+    border: 1px solid var(--border-color, #ddd);
+    border-radius: 4px;
+}
+
+/* Стили для иконки сворачивания/разворачивания */
+.collapse-toggle {
+    cursor: pointer;
+    margin-right: 5px;
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+    text-align: center;
+    line-height: 16px;
+    background-color: var(--primary, #79aec8);
+    color: var(--primary-fg, #fff);
+    border-radius: 2px;
+    font-weight: bold;
+} 

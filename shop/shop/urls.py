@@ -20,12 +20,13 @@ from rest_framework.authtoken import views
 from django.conf import settings
 from django.conf.urls.static import static
 from accounts.views import telegram_app_view
+from home.views import home_view
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/accounts/', include('accounts.urls')),
     path('api-token-auth/', views.obtain_auth_token),  # Для получения токена аутентификации
-    path('', telegram_app_view, name='telegram-app'),  # Главная страница - Telegram Mini App
+    path('', home_view, name='home'),  # Главная страница с новостями/акциями
     path('catalog/', include('catalog.urls', namespace='catalog')),  # URL для каталога товаров
     path('api/catalog/', include('catalog.api_urls', namespace='catalog_api')),  # API URL для каталога товаров
     path('api/cart/', include('cart.api_urls', namespace='cart_api')),  # API URL для корзины
