@@ -14,14 +14,33 @@ class OrderItemSerializer(serializers.ModelSerializer):
         fields = ['id', 'product', 'product_name', 'product_price', 'quantity', 'total_price']
         read_only_fields = ['id', 'product_name', 'product_price', 'total_price']
 
-class OrderSerializer(serializers.ModelSerializer):
-    items = OrderItemSerializer(many=True, read_only=True)
-    address = UserAddressSerializer(read_only=True)
+class OrderStatusSerializer(serializers.ModelSerializer):
+    """Сериализатор для отображения статуса заказа на фронтенде"""
+    status_display = serializers.SerializerMethodField()
     
     class Meta:
         model = Order
-        fields = ['id', 'user', 'address', 'payment_method', 'status', 'created_at', 'updated_at', 'total_price', 'delivery_cost', 'items', 'comment']
+        fields = ['id', 'status', 'status_display']
+    
+    def get_status_display(self, obj):
+        return obj.get_status_display()
+
+class OrderSerializer(serializers.ModelSerializer):
+    items = OrderItemSerializer(many=True, read_only=True)
+    address = UserAddressSerializer(read_only=True)
+    status_display = serializers.SerializerMethodField()
+    payment_method_display = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = Order
+        fields = ['id', 'user', 'address', 'payment_method', 'payment_method_display', 'status', 'status_display', 'created_at', 'updated_at', 'total_price', 'delivery_cost', 'items', 'comment']
         read_only_fields = ['id', 'user', 'created_at', 'total_price']
+    
+    def get_status_display(self, obj):
+        return obj.get_status_display()
+    
+    def get_payment_method_display(self, obj):
+        return obj.get_payment_method_display()
 
 class OrderCreateSerializer(serializers.Serializer):
     address_id = serializers.IntegerField()

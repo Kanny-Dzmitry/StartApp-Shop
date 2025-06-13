@@ -165,11 +165,12 @@ function initProductSearch() {
         searchContainer.appendChild(searchForm);
         searchContainer.appendChild(suggestionsContainer);
         
-        // Вставляем поисковую строку перед контентом каталога
-        const catalogContent = document.getElementById('catalog-content');
+        // Вставляем поисковую строку в начало контейнера каталога, перед навигацией
         const catalogContainer = document.getElementById('catalog-container');
-        if (catalogContainer && catalogContent) {
-            catalogContainer.insertBefore(searchContainer, catalogContent);
+        const catalogNavigation = document.getElementById('catalog-navigation');
+        
+        if (catalogContainer) {
+            catalogContainer.insertBefore(searchContainer, catalogContainer.firstChild);
         }
         
         // Добавляем обработчик клика по документу для скрытия подсказок

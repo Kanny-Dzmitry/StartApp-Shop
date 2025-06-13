@@ -63,15 +63,32 @@ class RegisterSerializer(serializers.ModelSerializer):
             password=validated_data['password']
         )
         return user
+
+class OrderBriefSerializer(serializers.Serializer):
+    """Краткая информация о заказе для отображения в профиле"""
+    id = serializers.IntegerField()
+    created_at = serializers.DateTimeField()
+    total_price = serializers.DecimalField(max_digits=10, decimal_places=2)
+    status = serializers.CharField()
+    status_display = serializers.SerializerMethodField()
+    items_count = serializers.SerializerMethodField()
+    
+    def get_status_display(self, obj):
+        """Получение отображаемого значения статуса заказа"""
+        return dict(obj.STATUS_CHOICES).get(obj.status, obj.status)
+    
+    def get_items_count(self, obj):
+        return obj.items.count()
         
 class ProfileSerializer(serializers.ModelSerializer):
     user = UserSerializer(read_only=True)
     address = AddressSerializer(required=False)
     addresses = serializers.SerializerMethodField()
+    recent_orders = serializers.SerializerMethodField()
     
     class Meta:
         model = Profile
-        fields = ['id', 'user', 'first_name', 'last_name', 'phone_number', 'address', 'addresses']
+        fields = ['id', 'user', 'first_name', 'last_name', 'phone_number', 'address', 'addresses', 'recent_orders']
         read_only_fields = ['id']
     
     def get_addresses(self, obj):
@@ -79,6 +96,18 @@ class ProfileSerializer(serializers.ModelSerializer):
         try:
             user_addresses = UserAddress.objects.filter(user=obj.user)
             return UserAddressSerializer(user_addresses, many=True).data
+        except Exception:
+            return []
+    
+    def get_recent_orders(self, obj):
+        """Получает список последних заказов пользователя"""
+        try:
+            # Импортируем здесь, чтобы избежать циклических импортов
+            from orders.models import Order
+            recent_orders = Order.objects.filter(user=obj.user).order_by('-created_at')[:5]
+            
+            # Используем OrderBriefSerializer для краткой информации о заказах
+            return OrderBriefSerializer(recent_orders, many=True).data
         except Exception:
             return []
     

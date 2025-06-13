@@ -6,7 +6,7 @@ from rest_framework.views import APIView
 from django.db import transaction
 
 from .models import Order, OrderItem, DeliverySettings
-from .serializers import OrderSerializer, OrderCreateSerializer, DeliverySettingsSerializer
+from .serializers import OrderSerializer, OrderCreateSerializer, DeliverySettingsSerializer, OrderStatusSerializer
 from accounts.models import UserAddress
 from catalog.models import Product
 from django.core.exceptions import ObjectDoesNotExist
@@ -18,6 +18,7 @@ from decimal import Decimal
 
 class DeliverySettingsView(APIView):
     """Представление для получения настроек доставки"""
+    permission_classes = [permissions.AllowAny]
     
     def get(self, request):
         settings = DeliverySettings.get_settings()
@@ -32,6 +33,44 @@ class OrderViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         # Пользователь видит только свои заказы
         return Order.objects.filter(user=self.request.user)
+    
+    def list(self, request):
+        """Получение списка заказов пользователя"""
+        queryset = self.get_queryset().order_by('-created_at')
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
+    
+    def retrieve(self, request, pk=None):
+        """Получение детальной информации о заказе"""
+        try:
+            order = self.get_queryset().get(pk=pk)
+            serializer = self.get_serializer(order)
+            return Response(serializer.data)
+        except Order.DoesNotExist:
+            return Response(
+                {"error": "Заказ не найден"}, 
+                status=status.HTTP_404_NOT_FOUND
+            )
+    
+    @action(detail=False, methods=['get'])
+    def history(self, request):
+        """Получение истории заказов пользователя"""
+        queryset = self.get_queryset().order_by('-created_at')
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
+    
+    @action(detail=True, methods=['get'])
+    def status(self, request, pk=None):
+        """Получение статуса заказа"""
+        try:
+            order = self.get_queryset().get(pk=pk)
+            serializer = OrderStatusSerializer(order)
+            return Response(serializer.data)
+        except Order.DoesNotExist:
+            return Response(
+                {"error": "Заказ не найден"}, 
+                status=status.HTTP_404_NOT_FOUND
+            )
     
     @action(detail=False, methods=['post'])
     def create_order(self, request):

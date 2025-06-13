@@ -4,7 +4,7 @@ from rest_framework.decorators import action, api_view, permission_classes
 from rest_framework.response import Response
 from django.contrib.auth.models import User
 from .models import Profile, Address, UserAddress
-from .serializers import ProfileSerializer, AddressSerializer, UserSerializer, RegisterSerializer, UserAddressSerializer
+from .serializers import ProfileSerializer, AddressSerializer, UserSerializer, RegisterSerializer, UserAddressSerializer, OrderBriefSerializer
 from rest_framework.authtoken.models import Token
 import hashlib
 import hmac
@@ -13,6 +13,9 @@ import json
 from django.conf import settings
 import secrets
 import string
+
+# Импорт моделей заказов
+from orders.models import Order
 
 class RegisterView(generics.CreateAPIView):
     queryset = User.objects.all()
@@ -56,6 +59,13 @@ class ProfileViewSet(viewsets.ModelViewSet):
             serializer.save() 
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+    @action(detail=False, methods=['get'])
+    def orders(self, request):
+        """Получение всех заказов пользователя"""
+        orders = Order.objects.filter(user=request.user).order_by('-created_at')
+        serializer = OrderBriefSerializer(orders, many=True)
+        return Response(serializer.data)
     
     @action(detail=False, methods=['put', 'patch'])
     def update_address(self, request):

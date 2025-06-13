@@ -9,6 +9,7 @@ router.register(r'addresses', UserAddressViewSet, basename='user-address')
 urlpatterns = [
     path('', include(router.urls)),
     path('register/', RegisterView.as_view(), name='register'),
+    path('profile/orders/', ProfileViewSet.as_view({'get': 'orders'}), name='profile-orders'),
     path('telegram-auth/', telegram_auth, name='telegram-auth'),
     path('telegram-app/', telegram_app_view, name='telegram-app'),
 ] 

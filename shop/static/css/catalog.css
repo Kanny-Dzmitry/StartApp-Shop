@@ -575,20 +575,22 @@
     animation-delay: 0.5s;
 }
 
-/* Стили для поиска товаров */
-.search-container {
+/* Стили для поиска товаров в каталоге */
+.catalog-container .search-container {
     width: 100%;
-    margin: 10px 0;
+    margin: 15px 0 10px;
     position: relative;
+    padding: 0 5px;
+    z-index: 10;
 }
 
-.search-form {
+.catalog-container .search-form {
     display: flex;
     width: 100%;
     position: relative;
 }
 
-.search-input {
+.catalog-container .search-input {
     flex: 1;
     padding: 12px 15px;
     border: 1px solid var(--tg-theme-hint-color, #999);
@@ -599,13 +601,15 @@
     outline: none;
     transition: border-color 0.3s;
     padding-right: 70px; /* Увеличиваем отступ справа для кнопок */
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
 }
 
-.search-input:focus {
+.catalog-container .search-input:focus {
     border-color: var(--tg-theme-button-color, #2481cc);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
 }
 
-.search-button {
+.catalog-container .search-button {
     position: absolute;
     right: 10px;
     top: 50%;
@@ -620,12 +624,12 @@
     justify-content: center;
 }
 
-.search-button:hover {
+.catalog-container .search-button:hover {
     color: var(--tg-theme-button-color, #2481cc);
 }
 
 /* Стили для кнопки очистки */
-.clear-search-button {
+.catalog-container .clear-search-button {
     position: absolute;
     right: 40px; /* Позиционируем перед кнопкой поиска */
     top: 50%;
@@ -644,12 +648,12 @@
     transition: background-color 0.2s;
 }
 
-.clear-search-button:hover {
+.catalog-container .clear-search-button:hover {
     background-color: var(--tg-theme-secondary-bg-color, #f5f5f5);
     color: var(--tg-theme-text-color, #000);
 }
 
-.theme-dark .clear-search-button:hover {
+.theme-dark .catalog-container .clear-search-button:hover {
     background-color: var(--tg-theme-secondary-bg-color, #444);
     color: var(--tg-theme-text-color, #fff);
 }

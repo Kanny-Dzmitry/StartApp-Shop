@@ -33,6 +33,10 @@ function updateProfileInfo() {
     .then(profileData => {
         displayProfileData(profileData);
         loadUserAddresses();
+        // Загружаем историю заказов
+        if (typeof loadOrderHistory === 'function') {
+            loadOrderHistory();
+        }
     })
     .catch(error => {
         console.error('Error:', error);
